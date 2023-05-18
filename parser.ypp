@@ -1,0 +1,87 @@
+%{
+    #include <stdio.h>
+    #include <iostream>
+    #include "hw3_output.hpp"
+    #include "types.h"
+    using namespace output;
+    extern int yylineno;
+    extern int yylex();
+    int yyerror(const char*);
+%}
+
+    %token VOID INT BYTE B BOOL OVERRIDE TRUE FALSE RETURN IF WHILE BREAK CONTINUE SC COMMA ID NUM STRING
+
+    %right ASSIGN
+    %left OR
+    %left AND
+    %left RELOP
+    %left PLUS MINUS
+    %left MULT DIV
+    %right NOT
+    %left LPAREN RPAREN LBRACE RBRACE
+    %right ELSE
+
+%%
+
+Program: Funcs                                                                  {$$ = new Program()}
+Funcs: /*epsilon*/                                                              {$$ = new Funcs()} // TODO: check if this is correct                                              
+Funcs: FuncDecl Funcs                                                           {$$ = new Funcs($1, $2)} // TODO: check if this is correct                                        
+FuncDecl: OverRide RetType ID LPAREN Formals {$$ = new Funcdecl(dynamic_cast<Rettype*>($1), $2, dynamic_cast<Formals*>($4));} RPAREN LBRACE Statements RBRACE {tables.pop_scope();}
+OverRide: /*epsilon*/                                                           {$$ = new Override(false);} // TODO: check if this is correct                                                       
+OverRide: OVERRIDE                                                              {$$ = new Override(true);}
+RetType: Type                                                                   {$$ = new Rettype(dynamic_cast<Type*>($1));}
+RetType:  VOID                                                                  {$$ = new Rettype();} // TODO: check if this is correct                                                        
+Formals: /*epsilon*/                                                            {$$ = new Formals();} // TODO: check if this is correct 
+Formals: FormalsList                                                            {$$ = new Formals(dynamic_cast<FormalsList*>($1));}
+FormalsList: FormalDecl                                                         {$$ = new Formalslist(dynamic_cast<FormalDecl*>($1));}
+FormalsList: FormalDecl COMMA FormalsList                                       {$$ = new Formalslist(dynamic_cast<FormalDecl*>($1), dynamic_cast<FormalsList*>($3));}
+FormalDecl: Type ID                                                             {$$ = new Formaldecl(dynamic_cast<Type*>($1), $2);}
+Statements: Statement                                                           {$$ = new Statements();}
+Statements: Statements Statement                                                {$$ = new Statements();}
+Statement: LBRACE {tables.push_scope();} Statements RBRACE                      {$$ = new Statement(dynamic_cast<Statements*>($2)); tables.pop_scope();}
+Statement: Type ID SC                                                           {$$ = new Statement(dynamic_cast<Type*>($1), $2);}
+Statement: Type ID ASSIGN Exp SC                                                {$$ = new Statement(dynamic_cast<Type*>($1), $2, dynamic_cast<Exp*>($4));}
+Statement: ID ASSIGN Exp SC                                                     {$$ = new Statement($1, dynamic_cast<Exp*>($3));}
+Statement: Call SC                                                              {$$ = new Statement(dynamic_cast<Call*>($1));}
+Statement: RETURN SC                                                            {$$ = new Statement($1);}
+Statement: RETURN Exp SC                                                        {$$ = new Statement($1, dynamic_cast<Exp*>($2));}
+Statement: IF LPAREN Exp {check_bool($3);} RPAREN {tables.push_scope();} Statement {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), $1); tables.pop_scope();}
+Statement: IF LPAREN Exp {check_bool($3);} RPAREN {tables.push_scope();} Statement {tables.pop_scope();} ELSE {tables.push_scope();} Statement {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), dynamic_cast<Statement*>($6));}
+Statement: WHILE LPAREN Exp {check_bool($3);} RPAREN Statement        {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), $1);}
+Statement: BREAK SC                                                             {$$ = new Statement($1);}
+Statement: CONTINUE SC                                                          {$$ = new Statement($1);}
+Call: ID LPAREN ExpList RPAREN                                                  {$$ = new Call($1, dynamic_cast<Explist*>($2));}
+Call: ID LPAREN RPAREN                                                          {$$ = new Call($1);}
+ExpList: Exp                                                                    {$$ = new Explist($1);}
+ExpList: Exp COMMA ExpList                                                      {$$ = new Explist($1, $2);}
+Type: INT                                                                       {$$ = new Type($1);}
+Type: BYTE                                                                      {$$ = new Type($1);}
+Type: BOOL                                                                      {$$ = new Type($1);}
+Exp: LPAREN Exp RPAREN                                                          {$$ = new Exp($1);}
+Exp: Exp PLUS Exp                                                               {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}
+Exp: Exp MINUS Exp                                                              {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}
+Exp: Exp MULT Exp                                                               {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}
+Exp: Exp DIV Exp                                                                {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}
+Exp: ID                                                                         {$$ = new Exp($1);}
+Exp: Call                                                                       {$$ = new Exp(dynamic_cast<Call*>($1));}
+Exp: NUM                                                                        {$$ = new Exp($1);}
+Exp: NUM B                                                                      {$$ = new Exp($1, $2);}
+Exp: STRING                                                                     {$$ = new Exp($1);}
+Exp: TRUE                                                                       {$$ = new Exp($1);}
+Exp: FALSE                                                                      {$$ = new Exp($1);}
+Exp: NOT Exp                                                                    {$$ = new Exp($1, dynamic_cast<Exp*>($2));}                                                      
+Exp: Exp AND Exp                                                                {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}
+Exp: Exp OR Exp                                                                 {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}
+Exp: Exp RELOP Exp                                                              {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}
+Exp: LPAREN Type RPAREN Exp                                                     {$$ = new Exp(dynamic_cast<Type*>($2), $4);}
+
+%%
+
+int yyerror(const char* message) {
+	errorSyn(yylineno);
+	exit(0);
+}
+
+int main() {
+    return yyparse();
+}
