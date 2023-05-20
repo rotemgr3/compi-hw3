@@ -45,9 +45,9 @@ Statement: ID ASSIGN Exp SC                                                     
 Statement: Call SC                                                              {$$ = new Statement(dynamic_cast<Call*>($1));}
 Statement: RETURN SC                                                            {$$ = new Statement($1);}
 Statement: RETURN Exp SC                                                        {$$ = new Statement($1, dynamic_cast<Exp*>($2));}
-Statement: IF LPAREN Exp {check_bool($3);} RPAREN {tables.push_scope();} Statement {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), $1); tables.pop_scope();}
-Statement: IF LPAREN Exp {check_bool($3);} RPAREN {tables.push_scope();} Statement {tables.pop_scope();} ELSE {tables.push_scope();} Statement {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), dynamic_cast<Statement*>($6));}
-Statement: WHILE LPAREN Exp {check_bool($3);} RPAREN Statement        {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), $1);}
+Statement: IF LPAREN Exp {verify_bool($3);} RPAREN {tables.push_scope();} Statement {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), $1); tables.pop_scope();}
+Statement: IF LPAREN Exp {verify_bool($3);} RPAREN {tables.push_scope();} Statement {tables.pop_scope();} ELSE {tables.push_scope();} Statement {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), dynamic_cast<Statement*>($6));}
+Statement: WHILE LPAREN Exp {verify_bool($3);} RPAREN Statement        {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), $1);}
 Statement: BREAK SC                                                             {$$ = new Statement($1);}
 Statement: CONTINUE SC                                                          {$$ = new Statement($1);}
 Call: ID LPAREN ExpList RPAREN                                                  {$$ = new Call($1, dynamic_cast<Explist*>($2));}

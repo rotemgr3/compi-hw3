@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "output.hpp"
 #include "parser.tab.hpp"
+#include "types.h"
 
 %}
 
