@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <iostream>
+#include "symbol_table.h"
 
 using namespace std;
 
@@ -46,7 +47,7 @@ class Rettype : public Node {
 class Funcdecl : public Node {
     public:
         bool is_override;
-        shared_ptr<Type> ret_type;
+        shared_ptr<Rettype> ret_type;
         string id;
         vector<shared_ptr<Formaldecl>> formals;
 

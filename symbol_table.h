@@ -23,9 +23,12 @@ class Symbol{
 class FunctionSymbol : public Symbol{
     public:
         vector<shared_ptr<Formaldecl>> args;
+        bool is_override;
+        shared_ptr<Rettype> ret_type;
 
-        FunctionSymbol(string type, string name, int offset, vector<shared_ptr<Formaldecl>> args) : Symbol(type, name, offset), args(args) {};
-        FunctionSymbol(const FunctionSymbol &function_symbol) : Symbol(function_symbol), args(function_symbol.args) {};
+        FunctionSymbol(string type, string name, vector<shared_ptr<Formaldecl>> args, bool is_override, shared_ptr<Rettype> ret_type) : 
+        Symbol(type, name, /*offset=*/0), args(args), is_override(is_override),  ret_type(ret_type) {};
+        FunctionSymbol(const FunctionSymbol &function_symbol) : Symbol(function_symbol), args(function_symbol.args), is_override(function_symbol.is_override) {};
         ~FunctionSymbol() = default;
 };
 
@@ -37,9 +40,10 @@ class SymbolTable{
         SymbolTable(const SymbolTable &symbol_table) : symbols(symbol_table.symbols) {};
         ~SymbolTable() = default;
         void push_symbol(string type, string name, int offset);
+        void push_function_symbol(shared_ptr<FunctionSymbol> new_symbol);
         void verify_new_symbol(string name);
+        vector<shared_ptr<Symbol>>::iterator verify_new_function_symbol(shared_ptr<FunctionSymbol> new_symbol);
         shared_ptr<Symbol> get_symbol(string name);
-        void push_function_symbol(string type, string name, vector<shared_ptr<Formaldecl>> args);
 };
 
 class SymbolTableStack{
@@ -52,7 +56,10 @@ class SymbolTableStack{
         ~SymbolTableStack() = default;
         void push_symbol_table();
         void pop_symbol_table();
-        void push_symbol(string type, string name, vector<shared_ptr<Formaldecl>> args = vector<shared_ptr<Formaldecl>>());
+        void push_symbol(string type, string name);
+        void push_function_symbol(shared_ptr<Funcdecl> funcdecl);
+        void verify_new_symbol(string name, vector<shared_ptr<Formaldecl>> args = vector<shared_ptr<Formaldecl>>());
+        vector<shared_ptr<Symbol>>::iterator verify_new_function_symbol(shared_ptr<FunctionSymbol> new_symbol);
         shared_ptr<Symbol> get_symbol(string name);
 };
 
