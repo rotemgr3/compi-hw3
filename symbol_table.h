@@ -50,6 +50,7 @@ class SymbolTableStack{
     public:
         vector<shared_ptr<SymbolTable>> symbol_tables;
         vector<int> offsets;
+        bool found_main = false;
 
         SymbolTableStack() = default;
         SymbolTableStack(const SymbolTableStack &symbol_table_stack) : symbol_tables(symbol_table_stack.symbol_tables) {};
@@ -61,7 +62,10 @@ class SymbolTableStack{
         void verify_new_symbol(string name, vector<shared_ptr<Formaldecl>> args = vector<shared_ptr<Formaldecl>>());
         vector<shared_ptr<Symbol>>::iterator verify_new_function_symbol(shared_ptr<FunctionSymbol> new_symbol);
         shared_ptr<Symbol> get_symbol(string name);
+        void verify_main();
+
 };
 
+void verify_bool(Node* expr);
 
 #endif // SYMBOL_TABLE_H

@@ -4,23 +4,6 @@
 
 using namespace std;
 
-
-void output::errorLex(const int lineno) {
-    std::cout << "line " << lineno << ": lexical error\n";
-}
-
-void output::errorSyn(const int lineno) {
-    std::cout << "line " << lineno << ": syntax error\n";
-}
-
-
-
-
-
-
-
-
-
 void output::endScope(){
     cout << "---end scope---" << endl;
 }
@@ -113,4 +96,8 @@ void output::errorOverrideWithoutDeclaration(int lineno, const string& id) {
 
 void output::errorAmbiguousCall(int lineno, const string& id) {
     cout << "line " << lineno << ": ambiguous call to overloaded function " << id << endl;
+}
+
+void output::errorMainOverride(int lineno){
+    cout << "line " << lineno << ": main is not allowed to be overridden" << endl;
 }

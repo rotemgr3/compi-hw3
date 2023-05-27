@@ -3,13 +3,16 @@
     #include <iostream>
     #include "hw3_output.hpp"
     #include "types.h"
+    #include "symbol_table.h"
+
     using namespace output;
     extern int yylineno;
     extern int yylex();
+    extern SymbolTableStack symbol_table_stack;
     int yyerror(const char*);
 %}
 
-    %token VOID INT BYTE B BOOL OVERRIDE TRUE FALSE RETURN IF WHILE BREAK CONTINUE SC COMMA ID NUM STRING
+    %nonassoc VOID INT BYTE B BOOL OVERRIDE TRUE FALSE RETURN IF WHILE BREAK CONTINUE SC COMMA ID NUM STRING
 
     %right ASSIGN
     %left OR
@@ -23,31 +26,31 @@
 
 %%
 
-Program: Funcs                                                                  {$$ = new Program()}
-Funcs: /*epsilon*/                                                              {$$ = new Funcs()} // TODO: check if this is correct                                              
-Funcs: FuncDecl Funcs                                                           {$$ = new Funcs($1, $2)} // TODO: check if this is correct                                        
-FuncDecl: OverRide RetType ID LPAREN Formals {$$ = new Funcdecl(dynamic_cast<Rettype*>($1), $2, dynamic_cast<Formals*>($4));} RPAREN LBRACE Statements RBRACE {tables.pop_scope();}
-OverRide: /*epsilon*/                                                           {$$ = new Override(false);} // TODO: check if this is correct                                                       
+Program: Funcs                                                                  {$$ = new Program();}
+Funcs: /*epsilon*/                                                              {$$ = new Funcs();}                                            
+Funcs: FuncDecl Funcs                                                           {$$ = new Funcs(dynamic_cast<Funcdecl*>($1), dynamic_cast<Funcs*>($2));}                                        
+FuncDecl: OverRide RetType ID LPAREN Formals {$$ = new Funcdecl(dynamic_cast<Override*>($1), dynamic_cast<Rettype*>($2), $3, dynamic_cast<Formals*>($4));} RPAREN LBRACE Statements RBRACE Pop
+OverRide: /*epsilon*/                                                           {$$ = new Override(false);}                                                      
 OverRide: OVERRIDE                                                              {$$ = new Override(true);}
 RetType: Type                                                                   {$$ = new Rettype(dynamic_cast<Type*>($1));}
-RetType:  VOID                                                                  {$$ = new Rettype();} // TODO: check if this is correct                                                        
-Formals: /*epsilon*/                                                            {$$ = new Formals();} // TODO: check if this is correct 
-Formals: FormalsList                                                            {$$ = new Formals(dynamic_cast<FormalsList*>($1));}
-FormalsList: FormalDecl                                                         {$$ = new Formalslist(dynamic_cast<FormalDecl*>($1));}
-FormalsList: FormalDecl COMMA FormalsList                                       {$$ = new Formalslist(dynamic_cast<FormalDecl*>($1), dynamic_cast<FormalsList*>($3));}
+RetType:  VOID                                                                  {$$ = new Rettype();}                                                       
+Formals: /*epsilon*/                                                            {$$ = new Formals();}
+Formals: FormalsList                                                            {$$ = new Formals(dynamic_cast<Formalslist*>($1));}
+FormalsList: FormalDecl                                                         {$$ = new Formalslist(dynamic_cast<Formaldecl*>($1));}
+FormalsList: FormalDecl COMMA FormalsList                                       {$$ = new Formalslist(dynamic_cast<Formaldecl*>($1), dynamic_cast<Formalslist*>($3));}
 FormalDecl: Type ID                                                             {$$ = new Formaldecl(dynamic_cast<Type*>($1), $2);}
 Statements: Statement                                                           {$$ = new Statements();}
 Statements: Statements Statement                                                {$$ = new Statements();}
-Statement: LBRACE {tables.push_scope();} Statements RBRACE                      {$$ = new Statement(dynamic_cast<Statements*>($2)); tables.pop_scope();}
+Statement: LBRACE Push Statements RBRACE                      {$$ = new Statement(dynamic_cast<Statements*>($2));} Pop
 Statement: Type ID SC                                                           {$$ = new Statement(dynamic_cast<Type*>($1), $2);}
 Statement: Type ID ASSIGN Exp SC                                                {$$ = new Statement(dynamic_cast<Type*>($1), $2, dynamic_cast<Exp*>($4));}
 Statement: ID ASSIGN Exp SC                                                     {$$ = new Statement($1, dynamic_cast<Exp*>($3));}
 Statement: Call SC                                                              {$$ = new Statement(dynamic_cast<Call*>($1));}
 Statement: RETURN SC                                                            {$$ = new Statement($1);}
 Statement: RETURN Exp SC                                                        {$$ = new Statement($1, dynamic_cast<Exp*>($2));}
-Statement: IF LPAREN Exp {verify_bool($3);} RPAREN {tables.push_scope();} Statement {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), $1); tables.pop_scope();}
-Statement: IF LPAREN Exp {verify_bool($3);} RPAREN {tables.push_scope();} Statement {tables.pop_scope();} ELSE {tables.push_scope();} Statement {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), dynamic_cast<Statement*>($6));}
-Statement: WHILE LPAREN Exp {verify_bool($3);} RPAREN Statement        {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), $1);}
+Statement: IF LPAREN Exp verify_bool RPAREN Push Statement {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), $1); symbol_table_stack.pop_symbol_table();}
+Statement: IF LPAREN Exp verify_bool RPAREN Push Statement ELSE {symbol_table_stack.pop_symbol_table();} Push Statement {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), dynamic_cast<Statement*>($6)); symbol_table_stack.pop_symbol_table();}
+Statement: WHILE LPAREN Exp verify_bool RPAREN Push Statement        {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), $1); symbol_table_stack.pop_symbol_table();}
 Statement: BREAK SC                                                             {$$ = new Statement($1);}
 Statement: CONTINUE SC                                                          {$$ = new Statement($1);}
 Call: ID LPAREN ExpList RPAREN                                                  {$$ = new Call($1, dynamic_cast<Explist*>($2));}
@@ -75,13 +78,19 @@ Exp: Exp OR Exp                                                                 
 Exp: Exp RELOP Exp                                                              {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}
 Exp: LPAREN Type RPAREN Exp                                                     {$$ = new Exp(dynamic_cast<Type*>($2), $4);}
 
+Push:                                                                           {symbol_table_stack.push_symbol_table();}                     
+Pop:                                                                            {symbol_table_stack.pop_symbol_table();}                        
+verify_bool: Exp                                                                {verify_bool($1);}
 %%
 
-int yyerror(const char* message) {
-	errorSyn(yylineno);
-	exit(0);
+SymbolTableStack symbol_table_stack = SymbolTableStack();
+int main(){
+        int res = yyparse();
+        // symbol_table_stack.check_program();
+        return res;
 }
 
-int main() {
-    return yyparse();
+int yyerror(const char *){
+	errorSyn(yylineno);
+	exit(0);
 }

@@ -25,6 +25,10 @@ void SymbolTable::verify_new_symbol(string name){
 }
 
 vector<shared_ptr<Symbol>>::iterator SymbolTable::verify_new_function_symbol(shared_ptr<FunctionSymbol> new_symbol){
+    if (new_symbol->name == "main" && new_symbol->is_override == true){
+        output::errorMainOverride(yylineno);
+        exit(0);
+    }
     for (auto it=symbols.begin(); it!=symbols.end(); it++){
         if ((*it)->name != new_symbol->name){
             continue;
@@ -100,6 +104,9 @@ void SymbolTableStack::push_symbol(string type, string name){
 }
 
 void SymbolTableStack::push_function_symbol(shared_ptr<Funcdecl> funcdecl){
+    if (funcdecl->id == "main" && funcdecl->ret_type->type->type == "void" && funcdecl->formals.size() == 0){
+        found_main = true;
+    }
     shared_ptr<FunctionSymbol> new_symbol = make_shared<FunctionSymbol>(funcdecl->ret_type->type, funcdecl->id, funcdecl->formals, funcdecl->is_override, funcdecl->ret_type);
     auto old_symbol_it = verify_new_function_symbol(new_symbol);
     symbol_tables.back()->push_function_symbol(new_symbol);
@@ -109,12 +116,15 @@ void SymbolTableStack::push_function_symbol(shared_ptr<Funcdecl> funcdecl){
         symbol_tables.back()->push_symbol((*it)->type->type, (*it)->id, offset);
         offset++;
     }
-    if (!symbol_tables.empty() && old_symbol_it != symbol_tables[0]->symbols.end()){
-        symbol_tables[0]->symbols.erase(old_symbol_it);
-    }
 }
 
-
+void SymbolTableStack::verify_main(){
+    if (found_main == true){
+        return;
+    }
+    output::errorMainMissing();
+    exit(0);
+}
 vector<shared_ptr<Symbol>>::iterator SymbolTableStack::verify_new_function_symbol(shared_ptr<FunctionSymbol> new_symbol) {
     if (symbol_tables.empty()) {
         return vector<shared_ptr<Symbol>>::iterator();
@@ -131,4 +141,9 @@ shared_ptr<Symbol> SymbolTableStack::get_symbol(string name){
     }
     output::errorUndef(yylineno, name);
     exit(0);
+}
+
+
+void verify_bool(Node* expr) {
+    return;
 }

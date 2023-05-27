@@ -5,9 +5,23 @@
 #include <vector>
 #include <memory>
 #include <iostream>
-#include "symbol_table.h"
 
 using namespace std;
+
+class Funcs;
+class Funcdecl;
+class Override;
+class Rettype;
+class Formaldecl;
+class Formals;
+class Type;
+class formalslist;
+class Exp;
+class Explist;
+class program;
+class Statements;
+class Statement;
+class Call;
 
 class Node {
 public:
@@ -22,8 +36,9 @@ public:
 #define YYSTYPE Node*
 
 class Program : public Node {
-    Program() = default;
-    virtual ~Program() = default;
+    public:
+        Program() = default;
+        virtual ~Program() = default;
 };
 
 class Funcs : public Node {
@@ -41,6 +56,7 @@ class Rettype : public Node {
         
         Rettype() = default;
         Rettype(Type* type) : type(type) {};
+        Rettype(const Rettype& ret_type) : type(ret_type.type) {};
         virtual ~Rettype() = default;
 };
 
@@ -62,13 +78,13 @@ class Override : public Node {
         virtual ~Override() = default;
 };
 
-class Formals : public Node {
+class Formaldecl : public Node {
     public:
-        shared_ptr<Formalslist> formals_list;
+        Type* type;
+        string id;
 
-        Formals() = default;
-        Formals(Formalslist* formals_list);
-        virtual ~Formals() = default;
+        Formaldecl(Type* type, Node* id);
+        virtual ~Formaldecl() = default;
 };
 
 class Formalslist : public Node {
@@ -80,20 +96,46 @@ public:
     virtual ~Formalslist() = default;
 };
 
-
-class Formaldecl : public Node {
+class Formals : public Node {
     public:
-        Type* type;
-        string id;
+        shared_ptr<Formalslist> formals_list;
 
-        Formaldecl(Type* type, Node* id);
-        virtual ~Formaldecl() = default;
+        Formals() = default;
+        Formals(Formalslist* formals_list);
+        virtual ~Formals() = default;
 };
 
 class Statements : public Node {
     public:
         Statements() = default;
         virtual ~Statements() = default;
+};
+
+
+class Type : public Node {
+    public:
+        string type;
+
+        Type(Node* type) : type(type->text) {};
+        virtual ~Type() = default;
+};
+
+
+class Exp : public Node {
+    public:
+        // Not sure about members variables 
+        string type;
+        string value;
+        bool is_var=false;
+
+        Exp(Exp *exp);
+        Exp(Exp *exp1, Node* op, Exp *exp2);
+        Exp(Node* str); // str = id or num or string true or false
+        Exp(Call* call);
+        Exp(Node* str1, Node* byte);
+        Exp(Node* str1, Exp* exp); // str = not
+        Exp(Type* type, Node* exp);
+        virtual ~Exp() = default;
 };
 
 class Statement : public Node {
@@ -126,34 +168,6 @@ class Explist : public Node {
         Explist(Node* exp, Node* exp_list);
         Explist(Node* exp);
         virtual ~Explist() = default;
-};
-
-
-class Type : public Node {
-    public:
-        string type;
-
-        Type(string type) : Node(type), type(type) {};
-        Type(Type* type) : type(type->type) {};
-        virtual ~Type() = default;
-};
-
-
-class Exp : public Node {
-    public:
-        // Not sure about members variables 
-        string type;
-        string value;
-        bool is_var=false;
-
-        Exp(Exp *exp);
-        Exp(Exp *exp1, Node* op, Exp *exp2);
-        Exp(Node* str); // str = id or num or string true or false
-        Exp(Call* call);
-        Exp(Node* str1, Node* byte);
-        Exp(Node* str1, Exp* exp); // str = not
-        Exp(Type* type, Node* exp);
-        virtual ~Exp() = default;
 };
 
 
