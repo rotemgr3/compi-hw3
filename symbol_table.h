@@ -17,7 +17,7 @@ class Symbol{
 
         Symbol(string type, string name, int offset) : type(type), name(name), offset(offset) {};
         Symbol(const Symbol &symbol) : type(symbol.type), name(symbol.name), offset(symbol.offset) {};
-        ~Symbol() = default;
+        virtual ~Symbol() = default;
 };
 
 class FunctionSymbol : public Symbol{

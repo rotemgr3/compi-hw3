@@ -107,7 +107,7 @@ void SymbolTableStack::push_function_symbol(shared_ptr<Funcdecl> funcdecl){
     if (funcdecl->id == "main" && funcdecl->ret_type->type->type == "void" && funcdecl->formals.size() == 0){
         found_main = true;
     }
-    shared_ptr<FunctionSymbol> new_symbol = make_shared<FunctionSymbol>(funcdecl->ret_type->type, funcdecl->id, funcdecl->formals, funcdecl->is_override, funcdecl->ret_type);
+    shared_ptr<FunctionSymbol> new_symbol = make_shared<FunctionSymbol>(funcdecl->ret_type->type->type, funcdecl->id, funcdecl->formals, funcdecl->is_override, funcdecl->ret_type);
     auto old_symbol_it = verify_new_function_symbol(new_symbol);
     symbol_tables.back()->push_function_symbol(new_symbol);
     push_symbol_table();

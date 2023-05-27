@@ -68,22 +68,24 @@ class Funcdecl : public Node {
         vector<shared_ptr<Formaldecl>> formals;
 
         Funcdecl(Override* override, Rettype* return_type, Node* id, Formals* params);
+        Funcdecl(const Funcdecl& funcdecl) : is_override(funcdecl.is_override), ret_type(funcdecl.ret_type), id(funcdecl.id), formals(funcdecl.formals) {};
         virtual ~Funcdecl() = default;
 };
 
 class Override : public Node {
     public:
         bool is_override;
-        Override(bool is_override);
+
+        Override(bool is_override) : is_override(is_override) {};
         virtual ~Override() = default;
 };
 
 class Formaldecl : public Node {
     public:
-        Type* type;
+        shared_ptr<Type> type;
         string id;
 
-        Formaldecl(Type* type, Node* id);
+        Formaldecl(Type* type, Node* id) : type(type), id(id->text) {};
         virtual ~Formaldecl() = default;
 };
 
@@ -101,7 +103,7 @@ class Formals : public Node {
         shared_ptr<Formalslist> formals_list;
 
         Formals() = default;
-        Formals(Formalslist* formals_list);
+        Formals(Formalslist* formals_list) : formals_list(formals_list) {};
         virtual ~Formals() = default;
 };
 
