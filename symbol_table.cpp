@@ -74,6 +74,18 @@ shared_ptr<Symbol> SymbolTable::get_symbol(string name){
     return nullptr;
 }
 
+SymbolTableStack::SymbolTableStack() : symbol_tables(), offsets() {
+    symbol_tables.push_back(make_shared<SymbolTable>());
+    offsets.push_back(0);
+
+    shared_ptr<Formals> formals_print = make_shared<Formals>(make_shared<Formalslist>(make_shared<Formaldecl>(make_shared<Type>("string"), make_shared<Node>("string"))));
+    shared_ptr<Funcdecl> func_decl_print =  make_shared<Funcdecl>(make_shared<Override>(false), make_shared<Rettype>(), make_shared<Node>("print"), formals_print);
+
+    shared_ptr<Formals> formals_printi = make_shared<Formals>(make_shared<Formalslist>(make_shared<Formaldecl>(make_shared<Type>("int"), make_shared<Node>("int"))));
+    shared_ptr<Funcdecl> func_decl_printi =  make_shared<Funcdecl>(make_shared<Override>(false), make_shared<Rettype>(), make_shared<Node>("printi"), formals_printi);
+};
+
+
 void SymbolTableStack::push_symbol_table(bool is_loop, string return_type){
     shared_ptr<SymbolTable> new_symbol_table = make_shared<SymbolTable>(is_loop, return_type);
     symbol_tables.push_back(new_symbol_table);
@@ -85,13 +97,36 @@ void SymbolTableStack::push_symbol_table(bool is_loop, string return_type){
     }
 }
 
+string upper(const string &str) {
+    if (str == "bool")
+        return "BOOL";
+    else if (str == "byte")
+        return "BYTE";
+    else if (str == "int")
+        return "INT";
+    else if (str == "void")
+        return "VOID";
+    else
+        return "STRING";
+}
+
 void SymbolTableStack::pop_symbol_table(){
     shared_ptr<SymbolTable> symbols = symbol_tables.back();
     symbol_tables.pop_back();
     offsets.pop_back();
     output::endScope();
     for (auto symbol : symbols->symbols){
-        output::printID(symbol->name, symbol->offset, symbol->type);
+        if (symbol->type == "function") {
+            shared_ptr<FunctionSymbol> function_symbol = dynamic_pointer_cast<FunctionSymbol>(symbol);
+            vector<string> args_types;
+            for (auto arg : function_symbol->args) {
+                args_types.push_back(upper(arg->type->type));
+            }
+            output::printID(symbol->name, symbol->offset, output::makeFunctionType(upper(function_symbol->ret_type->type->type), args_types));
+        }
+        else {
+            output::printID(symbol->name, symbol->offset, upper(symbol->type));
+        }
     }
 }
 
@@ -103,18 +138,21 @@ void SymbolTableStack::push_symbol(string type, string name){
     
 }
 
-void SymbolTableStack::push_function_symbol(shared_ptr<Funcdecl> funcdecl){
+void SymbolTableStack::push_function_symbol(shared_ptr<Funcdecl> funcdecl, bool is_decleration_only) {
     if (funcdecl->id == "main" && funcdecl->ret_type->type->type == "void" && funcdecl->formals.size() == 0){
         found_main = true;
     }
     shared_ptr<FunctionSymbol> new_symbol = make_shared<FunctionSymbol>("function", funcdecl->id, funcdecl->formals, funcdecl->is_override, funcdecl->ret_type);
     auto old_symbol_it = verify_new_function_symbol(new_symbol);
     symbol_tables.back()->push_function_symbol(new_symbol);
-    push_symbol_table(false, funcdecl->ret_type->type->type);
-    int offset = -1 * funcdecl->formals.size();
-    for(auto it=funcdecl->formals.end(); it!=funcdecl->formals.begin(); it--){
-        symbol_tables.back()->push_symbol((*it)->type->type, (*it)->id, offset);
-        offset++;
+
+    if (is_decleration_only == false){
+        push_symbol_table(false, funcdecl->ret_type->type->type);
+        int offset = -1 * funcdecl->formals.size();
+        for (auto it = funcdecl->formals.rbegin(); it != funcdecl->formals.rend(); ++it) { 
+            symbol_tables.back()->push_symbol((*it)->type->type, (*it)->id, offset);
+            offset++;
+        }
     }
 }
 
@@ -182,14 +220,38 @@ void SymbolTableStack::match_function_symbol(string name, vector<shared_ptr<Exp>
                 }
             }
         }
-        if (i == args.end())
+        if (i == args.size())
             match_count++;
-        return;
     }
-
+    if (match_count > 1) {
+        output::errorAmbiguousCall(yylineno, name);
+        exit(0);
+    }
+    else if (match_count == 0) {
+        if (found) {
+            output::errorPrototypeMismatch(yylineno, name);
+            exit(0);
+        }
+        else {
+            output::errorUndefFunc(yylineno, name);
+            exit(0);
+        }
+    }
 }
 
+bool SymbolTableStack::is_loop() {
+    for (auto symbol_table : symbol_tables) {
+        if (symbol_table->is_loop) {
+            return true;
+        }
+    }
+    return false;
+}
 
 void verify_bool(Node* expr) {
-    return;
+    auto exp = dynamic_cast<Exp*>(expr);
+    if (exp->type != "bool") {
+        output::errorMismatch(yylineno);
+        exit(0);
+    }
 }

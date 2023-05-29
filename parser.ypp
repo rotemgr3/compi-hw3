@@ -27,9 +27,9 @@
 %%
 
 Program: Funcs                                                                  {$$ = new Program();}
-Funcs: /*epsilon*/                                                              {$$ = new Funcs();}                                            
-Funcs: FuncDecl Funcs                                                           {$$ = new Funcs(dynamic_cast<Funcdecl*>($1), dynamic_cast<Funcs*>($2));}                                        
-FuncDecl: OverRide RetType ID LPAREN Formals {$$ = new Funcdecl(dynamic_cast<Override*>($1), dynamic_cast<Rettype*>($2), $3, dynamic_cast<Formals*>($4));} RPAREN LBRACE Statements RBRACE Pop
+Funcs: /*epsilon*/                                                              {}                                            
+Funcs: FuncDecl Funcs                                                           {}                                        
+FuncDecl: OverRide RetType ID LPAREN Formals {$$ = new Funcdecl(dynamic_cast<Override*>($1), dynamic_cast<Rettype*>($2), $3, dynamic_cast<Formals*>($5));} RPAREN LBRACE Statements RBRACE Pop
 OverRide: /*epsilon*/                                                           {$$ = new Override(false);}                                                      
 OverRide: OVERRIDE                                                              {$$ = new Override(true);}
 RetType: Type                                                                   {$$ = new Rettype(dynamic_cast<Type*>($1));}
@@ -45,18 +45,18 @@ Statement: LBRACE Push Statements RBRACE Pop                                    
 Statement: Type ID SC                                                           {$$ = new Statement(dynamic_cast<Type*>($1), $2);}
 Statement: Type ID ASSIGN Exp SC                                                {$$ = new Statement(dynamic_cast<Type*>($1), $2, dynamic_cast<Exp*>($4));}
 Statement: ID ASSIGN Exp SC                                                     {$$ = new Statement($1, dynamic_cast<Exp*>($3));}
-Statement: Call SC                                                              {$$ = new Statement(dynamic_cast<Call*>($1));}
+Statement: Call SC                                                              {}
 Statement: RETURN SC                                                            {$$ = new Statement($1);}
 Statement: RETURN Exp SC                                                        {$$ = new Statement($1, dynamic_cast<Exp*>($2));}
-Statement: IF LPAREN Exp verify_bool RPAREN Push Statement {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), $1); symbol_table_stack.pop_symbol_table();}
-Statement: IF LPAREN Exp verify_bool RPAREN Push Statement ELSE {symbol_table_stack.pop_symbol_table();} Push Statement {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), dynamic_cast<Statement*>($6)); symbol_table_stack.pop_symbol_table();}
-Statement: WHILE LPAREN Exp verify_bool RPAREN {symbol_table_stack.push_symbol_table(true);} Statement        {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), $1); symbol_table_stack.pop_symbol_table();}
+Statement: IF LPAREN verify_bool RPAREN Push Statement {symbol_table_stack.pop_symbol_table();}
+Statement: IF LPAREN verify_bool RPAREN Push Statement ELSE {symbol_table_stack.pop_symbol_table();} Push Statement {symbol_table_stack.pop_symbol_table();}
+Statement: WHILE LPAREN verify_bool RPAREN {symbol_table_stack.push_symbol_table(true);} Statement {symbol_table_stack.pop_symbol_table();}
 Statement: BREAK SC                                                             {$$ = new Statement($1);}
 Statement: CONTINUE SC                                                          {$$ = new Statement($1);}
-Call: ID LPAREN ExpList RPAREN                                                  {$$ = new Call($1, dynamic_cast<Explist*>($2));}
+Call: ID LPAREN ExpList RPAREN                                                  {$$ = new Call($1, dynamic_cast<Explist*>($3));}
 Call: ID LPAREN RPAREN                                                          {$$ = new Call($1);}
-ExpList: Exp                                                                    {$$ = new Explist($1);}
-ExpList: Exp COMMA ExpList                                                      {$$ = new Explist($1, $2);}
+ExpList: Exp                                                                    {$$ = new Explist(dynamic_cast<Exp*>($1));}
+ExpList: Exp COMMA ExpList                                                      {$$ = new Explist(dynamic_cast<Exp*>($1), dynamic_cast<Explist*>($3));}
 Type: INT                                                                       {$$ = new Type($1);}
 Type: BYTE                                                                      {$$ = new Type($1);}
 Type: BOOL                                                                      {$$ = new Type($1);}
@@ -84,9 +84,9 @@ verify_bool: Exp                                                                
 %%
 
 SymbolTableStack symbol_table_stack = SymbolTableStack();
+
 int main(){
         int res = yyparse();
-        // symbol_table_stack.check_program();
         return res;
 }
 

@@ -37,24 +37,21 @@ public:
 
 class Program : public Node {
     public:
-        Program() = default;
+        Program();
         virtual ~Program() = default;
 };
 
 class Funcs : public Node {
     public:
-        vector<shared_ptr<Funcdecl>> funcs_list;
-
         Funcs() = default;
-        Funcs(Funcdecl* funcdec, Funcs* funcs);
         virtual ~Funcs() = default;
 };
 
 class Rettype : public Node {
     public:
-        shared_ptr<Type> type; // If nullptr then void
+        shared_ptr<Type> type; 
         
-        Rettype() = default;
+        Rettype() : type(make_shared<Type>("void")) {};
         Rettype(Type* type) : type(type) {};
         Rettype(const Rettype& ret_type) : type(ret_type.type) {};
         virtual ~Rettype() = default;
@@ -68,6 +65,7 @@ class Funcdecl : public Node {
         vector<shared_ptr<Formaldecl>> formals;
 
         Funcdecl(Override* override, Rettype* return_type, Node* id, Formals* params);
+        Funcdecl(shared_ptr<Override> override, shared_ptr<Rettype> return_type, shared_ptr<Node> id, shared_ptr<Formals> params);
         Funcdecl(const Funcdecl& funcdecl) : is_override(funcdecl.is_override), ret_type(funcdecl.ret_type), id(funcdecl.id), formals(funcdecl.formals) {};
         virtual ~Funcdecl() = default;
 };
@@ -86,6 +84,7 @@ class Formaldecl : public Node {
         string id;
 
         Formaldecl(Type* type, Node* id) : type(type), id(id->text) {};
+        Formaldecl(shared_ptr<Type> type, shared_ptr<Node> id) : type(type), id(id->text) {};
         virtual ~Formaldecl() = default;
 };
 
@@ -93,7 +92,9 @@ class Formalslist : public Node {
 public:
     vector<shared_ptr<Formaldecl>> list;
 
+    Formalslist() = default;
     Formalslist(Formaldecl* formaldecl);
+    Formalslist(shared_ptr<Formaldecl> formaldecl);
     Formalslist(Formaldecl* formaldec, Formalslist* formals_list);
     virtual ~Formalslist() = default;
 };
@@ -102,8 +103,9 @@ class Formals : public Node {
     public:
         shared_ptr<Formalslist> formals_list;
 
-        Formals() = default;
+        Formals() : formals_list(make_shared<Formalslist>()) {};
         Formals(Formalslist* formals_list) : formals_list(formals_list) {};
+        Formals(shared_ptr<Formalslist> formals_list) : formals_list(formals_list) {};
         virtual ~Formals() = default;
 };
 
@@ -119,6 +121,7 @@ class Type : public Node {
         string type;
 
         Type(Node* type) : type(type->text) {};
+        Type(string type) : type(type) {};
         virtual ~Type() = default;
 };
 
@@ -145,20 +148,17 @@ class Statement : public Node {
         Statement(Type* type, Node* id);
         Statement(Type* type, Node* id, Exp* exp);
         Statement(Node* str, Exp* exp); // str = id or return
-        Statement(Call* call);
         Statement(Node* str); // str = break or continue or return
-        Statement(Exp* exp, Statement* statement, Node* str); // str = if or while
-        Statement(Exp* exp, Statement* statement1, Statement* statement2); // if else rule
         virtual ~Statement() = default;
 };
 
 class Call : public Node {
     public:
         string id;
-        Explist* exp_list;
+        shared_ptr<Explist> exp_list;
 
-        Call(Node* terminal);
-        Call(Node* terminal, Explist* exp_list);
+        Call(Node* id);
+        Call(Node* id, Explist* exp_list);
         virtual ~Call() = default;
 };
 
@@ -166,8 +166,8 @@ class Explist : public Node {
     public:
         vector<shared_ptr<Exp>> expressions;
 
-        Explist(Node* exp, Node* exp_list);
-        Explist(Node* exp);
+        Explist(Exp* exp, Explist* exp_list);
+        Explist(Exp* exp);
         virtual ~Explist() = default;
 };
 

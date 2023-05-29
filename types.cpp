@@ -7,13 +7,9 @@
 extern SymbolTableStack symbol_table_stack;
 extern int yylineno;
 
-
-Funcs::Funcs(Funcdecl* funcdec, Funcs* funcs) : funcs_list() {
-    funcs_list.push_back(make_shared<Funcdecl>(*funcdec));
-    if (funcs != nullptr) {
-        funcs_list.insert(funcs_list.end(), funcs->funcs_list.begin(), funcs->funcs_list.end());
-    }
+Program::Program() {
     symbol_table_stack.verify_main();
+    symbol_table_stack.pop_symbol_table();
 }
 
 Funcdecl::Funcdecl(Override* override, Rettype* return_type, Node* id, Formals* params) {
@@ -24,8 +20,21 @@ Funcdecl::Funcdecl(Override* override, Rettype* return_type, Node* id, Formals* 
     symbol_table_stack.push_function_symbol(make_shared<Funcdecl>(*this));
 }
 
+Funcdecl::Funcdecl(shared_ptr<Override> override, shared_ptr<Rettype> return_type, shared_ptr<Node> id, shared_ptr<Formals> params) {
+    is_override = override->is_override;
+    ret_type = return_type;
+    this->id = id->text;
+    formals = params->formals_list->list;
+    symbol_table_stack.push_function_symbol(make_shared<Funcdecl>(*this), true);
+}
+
+
 Formalslist::Formalslist(Formaldecl* formaldecl) : list() {
     list.push_back(make_shared<Formaldecl>(*formaldecl));
+}
+
+Formalslist::Formalslist(shared_ptr<Formaldecl> formaldecl) : list() {
+    list.push_back(formaldecl);
 }
 
 Formalslist::Formalslist(Formaldecl* formaldecl, Formalslist* formalslist) : list() {
@@ -44,11 +53,11 @@ Exp::Exp(Exp* exp1, Node* op, Exp* exp2){
         symbol_table_stack.verify_symbol(exp2->value);
     }
     if (op->text == "+" || op->text == "-" || op->text == "*" || op->text == "/") {
-        if (exp1->type != "int" || exp1->type != "byte") {
+        if (exp1->type != "int" && exp1->type != "byte") {
             output::errorMismatch(yylineno);
             exit(0);
         }
-        if (exp2->type != "int" || exp2->type != "byte") {
+        if (exp2->type != "int" && exp2->type != "byte") {
             output::errorMismatch(yylineno);
             exit(0);
         }
@@ -72,11 +81,11 @@ Exp::Exp(Exp* exp1, Node* op, Exp* exp2){
         type = "bool";
     }
     else { // ==|!=|<|>|<=|>=   
-        if (exp1->type != "int" || exp1->type != "byte") {
+        if (exp1->type != "int" && exp1->type != "byte") {
             output::errorMismatch(yylineno);
             exit(0);
         }
-        if (exp2->type != "int" || exp2->type != "byte") {
+        if (exp2->type != "int" && exp2->type != "byte") {
             output::errorMismatch(yylineno);
             exit(0);
         }
@@ -89,18 +98,19 @@ Exp::Exp(Node* str) : value(str->text) {
     if (str->text == "true" || str->text == "false"){
         type = "bool";
         value = str->text;
+        return;
     }
-    if (str->text[0] == '"') {
+    if (str->text[0] == '\"') {
         type = "string";
+        return;
     }
     if (isdigit(str->text[0])) {
         type = "int";
+        return;
     }
-    else {
-        symbol_table_stack.verify_symbol(str->text);
-        type = symbol_table_stack.get_symbol(str->text)->type;
-        is_var = true;
-    }   
+    symbol_table_stack.verify_symbol(str->text);
+    type = symbol_table_stack.get_symbol(str->text)->type;
+    is_var = true;
 }
 Exp::Exp(Call* call) {
     symbol_table_stack.verify_symbol(call->id);
@@ -193,9 +203,45 @@ Statement::Statement(Node* str, Exp* exp) {
     }
 }
 
-Statement::Statement(Call* call){
-    
+// str = break or continue or return
+Statement::Statement(Node* str) {
+    if (str->text == "return") {
+        auto symbol_table = symbol_table_stack.get_current_symbol_table();
+        if (symbol_table->return_type != "void") {
+            output::errorMismatch(yylineno);
+            exit(0);
+        }
+    }
+    else if (str->text == "break") {
+        if (!symbol_table_stack.is_loop()) {
+            output::errorUnexpectedBreak(yylineno);
+            exit(0);
+        }
+    }
+    // str = continue
+    else {
+        if (!symbol_table_stack.is_loop()) {
+            output::errorUnexpectedContinue(yylineno);
+            exit(0);
+        }
+    }
 }
-Statement::Statement(Node* str); // str = break or continue or return
-Statement::Statement(Exp* exp, Statement* statement, Node* str); // str = if or while
-Statement::Statement(Exp* exp, Statement* statement1, Statement* statement2); // if else rule
+
+Call::Call(Node* id) : id(id->text), exp_list() {
+    symbol_table_stack.match_function_symbol(id->text, exp_list->expressions);
+}
+
+Call::Call(Node* id, Explist* exp_list) : id(id->text), exp_list(exp_list) {
+    symbol_table_stack.match_function_symbol(id->text, exp_list->expressions);
+}
+
+Explist::Explist(Exp* exp, Explist* exp_list) : expressions(){
+    expressions.push_back(make_shared<Exp>(*exp));
+    if (exp_list != nullptr) {
+        expressions.insert(expressions.end(), exp_list->expressions.begin(), exp_list->expressions.end());
+    }
+}
+
+Explist::Explist(Exp* exp) : expressions(){
+    expressions.push_back(make_shared<Exp>(*exp));
+}
