@@ -128,21 +128,20 @@ class Exp : public Node {
         // Not sure about members variables 
         string type;
         string value;
-        bool is_var=false;
+        bool is_var = false;
 
-        Exp(Exp *exp);
-        Exp(Exp *exp1, Node* op, Exp *exp2);
+        Exp(Exp* exp);
+        Exp(Exp* exp1, Node* op, Exp* exp2);
         Exp(Node* str); // str = id or num or string true or false
         Exp(Call* call);
         Exp(Node* str1, Node* byte);
         Exp(Node* str1, Exp* exp); // str = not
-        Exp(Type* type, Node* exp);
+        Exp(Type* type, Exp* exp);
         virtual ~Exp() = default;
 };
 
 class Statement : public Node {
     public:
-        Statement(Statements* statements);
         Statement(Type* type, Node* id);
         Statement(Type* type, Node* id, Exp* exp);
         Statement(Node* str, Exp* exp); // str = id or return

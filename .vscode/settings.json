@@ -9,6 +9,7 @@
         "utility": "cpp",
         "compare": "cpp",
         "istream": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "*.tcc": "cpp"
     }
 }

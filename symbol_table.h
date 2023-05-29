@@ -35,9 +35,12 @@ class FunctionSymbol : public Symbol{
 class SymbolTable{
     public:
         vector<shared_ptr<Symbol>> symbols;
+        bool is_loop = false;
+        string return_type;
 
         SymbolTable() = default;
-        SymbolTable(const SymbolTable &symbol_table) : symbols(symbol_table.symbols) {};
+        SymbolTable(bool is_loop, string return_type) : symbols(), is_loop(is_loop), return_type(return_type) {};
+        SymbolTable(const SymbolTable &symbol_table) : symbols(symbol_table.symbols), is_loop(symbol_table.is_loop), return_type(symbol_table.return_type) {};
         ~SymbolTable() = default;
         void push_symbol(string type, string name, int offset);
         void push_function_symbol(shared_ptr<FunctionSymbol> new_symbol);
@@ -55,14 +58,17 @@ class SymbolTableStack{
         SymbolTableStack() = default;
         SymbolTableStack(const SymbolTableStack &symbol_table_stack) : symbol_tables(symbol_table_stack.symbol_tables) {};
         ~SymbolTableStack() = default;
-        void push_symbol_table();
+        void push_symbol_table(bool is_loop = false, string return_type = "");
         void pop_symbol_table();
         void push_symbol(string type, string name);
         void push_function_symbol(shared_ptr<Funcdecl> funcdecl);
         void verify_new_symbol(string name, vector<shared_ptr<Formaldecl>> args = vector<shared_ptr<Formaldecl>>());
         vector<shared_ptr<Symbol>>::iterator verify_new_function_symbol(shared_ptr<FunctionSymbol> new_symbol);
         shared_ptr<Symbol> get_symbol(string name);
+        void match_function_symbol(string name, vector<shared_ptr<Exp>> args);
+        void verify_symbol(string name);
         void verify_main();
+        shared_ptr<SymbolTable> get_current_symbol_table();
 
 };
 

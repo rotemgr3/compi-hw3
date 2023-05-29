@@ -74,8 +74,8 @@ shared_ptr<Symbol> SymbolTable::get_symbol(string name){
     return nullptr;
 }
 
-void SymbolTableStack::push_symbol_table(){
-    shared_ptr<SymbolTable> new_symbol_table = make_shared<SymbolTable>();
+void SymbolTableStack::push_symbol_table(bool is_loop, string return_type){
+    shared_ptr<SymbolTable> new_symbol_table = make_shared<SymbolTable>(is_loop, return_type);
     symbol_tables.push_back(new_symbol_table);
     if (offsets.empty()){
         offsets.push_back(0);
@@ -107,10 +107,10 @@ void SymbolTableStack::push_function_symbol(shared_ptr<Funcdecl> funcdecl){
     if (funcdecl->id == "main" && funcdecl->ret_type->type->type == "void" && funcdecl->formals.size() == 0){
         found_main = true;
     }
-    shared_ptr<FunctionSymbol> new_symbol = make_shared<FunctionSymbol>(funcdecl->ret_type->type->type, funcdecl->id, funcdecl->formals, funcdecl->is_override, funcdecl->ret_type);
+    shared_ptr<FunctionSymbol> new_symbol = make_shared<FunctionSymbol>("function", funcdecl->id, funcdecl->formals, funcdecl->is_override, funcdecl->ret_type);
     auto old_symbol_it = verify_new_function_symbol(new_symbol);
     symbol_tables.back()->push_function_symbol(new_symbol);
-    push_symbol_table();
+    push_symbol_table(false, funcdecl->ret_type->type->type);
     int offset = -1 * funcdecl->formals.size();
     for(auto it=funcdecl->formals.end(); it!=funcdecl->formals.begin(); it--){
         symbol_tables.back()->push_symbol((*it)->type->type, (*it)->id, offset);
@@ -139,8 +139,54 @@ shared_ptr<Symbol> SymbolTableStack::get_symbol(string name){
             return symbol;
         }
     }
-    output::errorUndef(yylineno, name);
-    exit(0);
+    return nullptr;
+}
+
+void SymbolTableStack::verify_symbol(string name){
+    auto symbol = get_symbol(name);
+    if (symbol == nullptr){
+        output::errorUndef(yylineno, name);
+        exit(0);
+    }
+}
+
+shared_ptr<SymbolTable> SymbolTableStack::get_current_symbol_table(){
+    return symbol_tables.back();
+}
+
+void SymbolTableStack::match_function_symbol(string name, vector<shared_ptr<Exp>> args) {
+    if (symbol_tables.empty()) {
+        output::errorUndefFunc(yylineno, name);
+        exit(0);
+    }
+    auto first_symbol_table = symbol_tables[0];
+    bool found = false;
+    int match_count = 0;
+    for (auto symbol : first_symbol_table->symbols) {
+        if (symbol->name != name) {
+            continue;
+        }
+        if (symbol->type != "function") {
+            continue;
+        }
+        shared_ptr<FunctionSymbol> function_symbol = dynamic_pointer_cast<FunctionSymbol>(symbol);
+        found = true;
+        if (function_symbol->args.size() != args.size()) {
+            continue;
+        }
+        int i;
+        for (i = 0; i < args.size(); i++) {
+            if (function_symbol->args[i]->type->type != args[i]->type) {
+                if (!(function_symbol->args[i]->type->type == "int" && args[i]->type == "byte")) {
+                    break;
+                }
+            }
+        }
+        if (i == args.end())
+            match_count++;
+        return;
+    }
+
 }
 
 

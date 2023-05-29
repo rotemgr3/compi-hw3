@@ -41,7 +41,7 @@ FormalsList: FormalDecl COMMA FormalsList                                       
 FormalDecl: Type ID                                                             {$$ = new Formaldecl(dynamic_cast<Type*>($1), $2);}
 Statements: Statement                                                           {$$ = new Statements();}
 Statements: Statements Statement                                                {$$ = new Statements();}
-Statement: LBRACE Push Statements RBRACE                      {$$ = new Statement(dynamic_cast<Statements*>($2));} Pop
+Statement: LBRACE Push Statements RBRACE Pop                                    {} 
 Statement: Type ID SC                                                           {$$ = new Statement(dynamic_cast<Type*>($1), $2);}
 Statement: Type ID ASSIGN Exp SC                                                {$$ = new Statement(dynamic_cast<Type*>($1), $2, dynamic_cast<Exp*>($4));}
 Statement: ID ASSIGN Exp SC                                                     {$$ = new Statement($1, dynamic_cast<Exp*>($3));}
@@ -50,7 +50,7 @@ Statement: RETURN SC                                                            
 Statement: RETURN Exp SC                                                        {$$ = new Statement($1, dynamic_cast<Exp*>($2));}
 Statement: IF LPAREN Exp verify_bool RPAREN Push Statement {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), $1); symbol_table_stack.pop_symbol_table();}
 Statement: IF LPAREN Exp verify_bool RPAREN Push Statement ELSE {symbol_table_stack.pop_symbol_table();} Push Statement {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), dynamic_cast<Statement*>($6)); symbol_table_stack.pop_symbol_table();}
-Statement: WHILE LPAREN Exp verify_bool RPAREN Push Statement        {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), $1); symbol_table_stack.pop_symbol_table();}
+Statement: WHILE LPAREN Exp verify_bool RPAREN {symbol_table_stack.push_symbol_table(true);} Statement        {$$ = new Statement(dynamic_cast<Exp*>($3), dynamic_cast<Statement*>($5), $1); symbol_table_stack.pop_symbol_table();}
 Statement: BREAK SC                                                             {$$ = new Statement($1);}
 Statement: CONTINUE SC                                                          {$$ = new Statement($1);}
 Call: ID LPAREN ExpList RPAREN                                                  {$$ = new Call($1, dynamic_cast<Explist*>($2));}
@@ -60,7 +60,7 @@ ExpList: Exp COMMA ExpList                                                      
 Type: INT                                                                       {$$ = new Type($1);}
 Type: BYTE                                                                      {$$ = new Type($1);}
 Type: BOOL                                                                      {$$ = new Type($1);}
-Exp: LPAREN Exp RPAREN                                                          {$$ = new Exp($1);}
+Exp: LPAREN Exp RPAREN                                                          {$$ = new Exp(dynamic_cast<Exp*>($1));}
 Exp: Exp PLUS Exp                                                               {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}
 Exp: Exp MINUS Exp                                                              {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}
 Exp: Exp MULT Exp                                                               {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}
@@ -76,7 +76,7 @@ Exp: NOT Exp                                                                    
 Exp: Exp AND Exp                                                                {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}
 Exp: Exp OR Exp                                                                 {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}
 Exp: Exp RELOP Exp                                                              {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}
-Exp: LPAREN Type RPAREN Exp                                                     {$$ = new Exp(dynamic_cast<Type*>($2), $4);}
+Exp: LPAREN Type RPAREN Exp                                                     {$$ = new Exp(dynamic_cast<Type*>($2), dynamic_cast<Exp*>($4));}
 
 Push:                                                                           {symbol_table_stack.push_symbol_table();}                     
 Pop:                                                                            {symbol_table_stack.pop_symbol_table();}                        
