@@ -179,17 +179,17 @@ Statement::Statement(Node* str, Exp* exp) {
         if (exp->is_var){
             symbol_table_stack.verify_symbol(exp->value);
         }
-        auto symbol_table = symbol_table_stack.get_current_symbol_table();
-        if (symbol_table->return_type == "void") {
+        if (symbol_table_stack.verify_return_type("void")) {
             output::errorMismatch(yylineno);
             exit(0);
         }
-        if(symbol_table->return_type != exp->type){
-             if (!(symbol_table->return_type == "int" && exp->type == "byte")) {
-                output::errorMismatch(yylineno);
-                exit(0);
-            }  
+        if(symbol_table_stack.verify_return_type("int") && exp->type != "byte"){
+            return;
         }
+        if (!(symbol_table_stack.verify_return_type(exp->type))) {
+            output::errorMismatch(yylineno);
+            exit(0);
+        }  
     }
     else {
         symbol_table_stack.verify_symbol(str->text);
@@ -206,8 +206,7 @@ Statement::Statement(Node* str, Exp* exp) {
 // str = break or continue or return
 Statement::Statement(Node* str) {
     if (str->text == "return") {
-        auto symbol_table = symbol_table_stack.get_current_symbol_table();
-        if (symbol_table->return_type != "void") {
+        if (!symbol_table_stack.verify_return_type("void")) {
             output::errorMismatch(yylineno);
             exit(0);
         }
@@ -227,7 +226,7 @@ Statement::Statement(Node* str) {
     }
 }
 
-Call::Call(Node* id) : id(id->text), exp_list() {
+Call::Call(Node* id) : id(id->text), exp_list(make_shared<Explist>()) {
     symbol_table_stack.match_function_symbol(id->text, exp_list->expressions);
 }
 

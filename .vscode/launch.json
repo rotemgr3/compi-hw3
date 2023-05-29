@@ -10,7 +10,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${fileDirname}/hw3",
-            "args": ["<", "t1.in"],
+            "args": ["<", "./hw3_tests/t14-main-redef.in"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}"
         }

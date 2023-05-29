@@ -59,7 +59,8 @@ vector<shared_ptr<Symbol>>::iterator SymbolTable::verify_new_function_symbol(sha
             }  
         }
         if (new_symbol->is_override == false && function_symbol->is_override == false) {
-            // TODO: check if it can happen
+            output::errorFuncNoOverride(yylineno, function_symbol->name);
+            exit(0);
         }
     }
     return symbols.end();
@@ -148,10 +149,10 @@ void SymbolTableStack::push_function_symbol(shared_ptr<Funcdecl> funcdecl, bool 
 
     if (is_decleration_only == false){
         push_symbol_table(false, funcdecl->ret_type->type->type);
-        int offset = -1 * funcdecl->formals.size();
-        for (auto it = funcdecl->formals.rbegin(); it != funcdecl->formals.rend(); ++it) { 
+        int offset = -1;
+        for (auto it = funcdecl->formals.begin(); it != funcdecl->formals.end(); ++it) { 
             symbol_tables.back()->push_symbol((*it)->type->type, (*it)->id, offset);
-            offset++;
+            offset--;
         }
     }
 }
@@ -243,6 +244,18 @@ bool SymbolTableStack::is_loop() {
     for (auto symbol_table : symbol_tables) {
         if (symbol_table->is_loop) {
             return true;
+        }
+    }
+    return false;
+}
+
+bool SymbolTableStack::verify_return_type(string type) {
+    for (auto it = symbol_tables.rbegin(); it != symbol_tables.rend(); ++it) {
+        if ((*it)->return_type == type) {
+            return true;
+        }
+        if ((*it)->return_type != "") {
+            return false;
         }
     }
     return false;

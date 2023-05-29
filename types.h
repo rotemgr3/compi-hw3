@@ -168,6 +168,7 @@ class Explist : public Node {
 
         Explist(Exp* exp, Explist* exp_list);
         Explist(Exp* exp);
+        Explist() = default;
         virtual ~Explist() = default;
 };
 

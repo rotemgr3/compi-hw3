@@ -70,6 +70,7 @@ class SymbolTableStack{
         void verify_main();
         shared_ptr<SymbolTable> get_current_symbol_table();
         bool is_loop();
+        bool verify_return_type(string type);
 
 };
 
