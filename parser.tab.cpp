@@ -1432,7 +1432,7 @@ yyreduce:
 
   case 39: /* Exp: LPAREN Exp RPAREN  */
 #line 63 "parser.ypp"
-                                                                                {yyval = new Exp(dynamic_cast<Exp*>(yyvsp[-2]));}
+                                                                                {yyval = new Exp(dynamic_cast<Exp*>(yyvsp[-1]));}
 #line 1437 "parser.tab.cpp"
     break;
 

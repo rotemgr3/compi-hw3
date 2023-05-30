@@ -156,6 +156,7 @@ class Call : public Node {
     public:
         string id;
         shared_ptr<Explist> exp_list;
+        string ret_type;
 
         Call(Node* id);
         Call(Node* id, Explist* exp_list);

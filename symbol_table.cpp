@@ -59,7 +59,7 @@ vector<shared_ptr<Symbol>>::iterator SymbolTable::verify_new_function_symbol(sha
             }  
         }
         if (new_symbol->is_override == false && function_symbol->is_override == false) {
-            output::errorFuncNoOverride(yylineno, function_symbol->name);
+            output::errorDef(yylineno, function_symbol->name);
             exit(0);
         }
     }
@@ -193,11 +193,12 @@ shared_ptr<SymbolTable> SymbolTableStack::get_current_symbol_table(){
     return symbol_tables.back();
 }
 
-void SymbolTableStack::match_function_symbol(string name, vector<shared_ptr<Exp>> args) {
+shared_ptr<FunctionSymbol> SymbolTableStack::match_function_symbol(string name, vector<shared_ptr<Exp>> args) {
     if (symbol_tables.empty()) {
         output::errorUndefFunc(yylineno, name);
         exit(0);
     }
+    shared_ptr<FunctionSymbol> res_func;
     auto first_symbol_table = symbol_tables[0];
     bool found = false;
     int match_count = 0;
@@ -221,8 +222,10 @@ void SymbolTableStack::match_function_symbol(string name, vector<shared_ptr<Exp>
                 }
             }
         }
-        if (i == args.size())
+        if (i == args.size()) {
             match_count++;
+            res_func = function_symbol;
+        }
     }
     if (match_count > 1) {
         output::errorAmbiguousCall(yylineno, name);
@@ -238,6 +241,7 @@ void SymbolTableStack::match_function_symbol(string name, vector<shared_ptr<Exp>
             exit(0);
         }
     }
+    return res_func;
 }
 
 bool SymbolTableStack::is_loop() {

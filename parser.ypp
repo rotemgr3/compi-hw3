@@ -60,7 +60,7 @@ ExpList: Exp COMMA ExpList                                                      
 Type: INT                                                                       {$$ = new Type($1);}
 Type: BYTE                                                                      {$$ = new Type($1);}
 Type: BOOL                                                                      {$$ = new Type($1);}
-Exp: LPAREN Exp RPAREN                                                          {$$ = new Exp(dynamic_cast<Exp*>($1));}
+Exp: LPAREN Exp RPAREN                                                          {$$ = new Exp(dynamic_cast<Exp*>($2));}
 Exp: Exp PLUS Exp                                                               {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}
 Exp: Exp MINUS Exp                                                              {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}
 Exp: Exp MULT Exp                                                               {$$ = new Exp(dynamic_cast<Exp*>($1), $2, dynamic_cast<Exp*>($3));}

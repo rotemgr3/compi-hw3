@@ -114,7 +114,7 @@ Exp::Exp(Node* str) : value(str->text) {
 }
 Exp::Exp(Call* call) {
     symbol_table_stack.verify_symbol(call->id);
-    type = dynamic_cast<FunctionSymbol*>(symbol_table_stack.get_symbol(call->id).get())->ret_type->type->type;
+    type = call->ret_type;
 }
 
 Exp::Exp(Node* str1, Node* byte){
@@ -183,7 +183,7 @@ Statement::Statement(Node* str, Exp* exp) {
             output::errorMismatch(yylineno);
             exit(0);
         }
-        if(symbol_table_stack.verify_return_type("int") && exp->type != "byte"){
+        if(symbol_table_stack.verify_return_type("int") && exp->type == "byte"){
             return;
         }
         if (!(symbol_table_stack.verify_return_type(exp->type))) {
@@ -227,11 +227,11 @@ Statement::Statement(Node* str) {
 }
 
 Call::Call(Node* id) : id(id->text), exp_list(make_shared<Explist>()) {
-    symbol_table_stack.match_function_symbol(id->text, exp_list->expressions);
+    ret_type = symbol_table_stack.match_function_symbol(id->text, exp_list->expressions)->ret_type->type->type;
 }
 
 Call::Call(Node* id, Explist* exp_list) : id(id->text), exp_list(exp_list) {
-    symbol_table_stack.match_function_symbol(id->text, exp_list->expressions);
+    ret_type = symbol_table_stack.match_function_symbol(id->text, exp_list->expressions)->ret_type->type->type;
 }
 
 Explist::Explist(Exp* exp, Explist* exp_list) : expressions(){

@@ -28,7 +28,8 @@ class FunctionSymbol : public Symbol{
 
         FunctionSymbol(string type, string name, vector<shared_ptr<Formaldecl>> args, bool is_override, shared_ptr<Rettype> ret_type) : 
         Symbol(type, name, /*offset=*/0), args(args), is_override(is_override),  ret_type(ret_type) {};
-        FunctionSymbol(const FunctionSymbol &function_symbol) : Symbol(function_symbol), args(function_symbol.args), is_override(function_symbol.is_override) {};
+        FunctionSymbol(const FunctionSymbol &function_symbol) : 
+            Symbol(function_symbol), args(function_symbol.args), is_override(function_symbol.is_override), ret_type(function_symbol.ret_type) {};
         ~FunctionSymbol() = default;
 };
 
@@ -65,7 +66,7 @@ class SymbolTableStack{
         void verify_new_symbol(string name, vector<shared_ptr<Formaldecl>> args = vector<shared_ptr<Formaldecl>>());
         vector<shared_ptr<Symbol>>::iterator verify_new_function_symbol(shared_ptr<FunctionSymbol> new_symbol);
         shared_ptr<Symbol> get_symbol(string name);
-        void match_function_symbol(string name, vector<shared_ptr<Exp>> args);
+        shared_ptr<FunctionSymbol> match_function_symbol(string name, vector<shared_ptr<Exp>> args);
         void verify_symbol(string name);
         void verify_main();
         shared_ptr<SymbolTable> get_current_symbol_table();
