@@ -46,17 +46,19 @@ vector<shared_ptr<Symbol>>::iterator SymbolTable::verify_new_function_symbol(sha
             exit(0);
         }
         if (new_symbol->is_override == true && function_symbol->is_override == true) {
-            if (new_symbol->ret_type->type != function_symbol->ret_type->type){
+            if (new_symbol->ret_type->type->type != function_symbol->ret_type->type->type){
                 return it;
             }
             if (new_symbol->args.size() != function_symbol->args.size()){
                 return it;
             }
             for(int i = 0; i<new_symbol->args.size(); i++){
-                if(new_symbol->args[i]->type != function_symbol->args[i]->type){
+                if(new_symbol->args[i]->type->type != function_symbol->args[i]->type->type){
                     return it;
                 }
             }  
+            output::errorDef(yylineno, function_symbol->name);
+            exit(0);
         }
         if (new_symbol->is_override == false && function_symbol->is_override == false) {
             output::errorDef(yylineno, function_symbol->name);
@@ -133,6 +135,9 @@ void SymbolTableStack::pop_symbol_table(){
 
 void SymbolTableStack::push_symbol(string type, string name){
     int offset = offsets.back();
+    for (auto symbol_table : symbol_tables){
+        symbol_table->verify_new_symbol(name);
+    }
     symbol_tables.back()->push_symbol(type, name, offset);
     offsets.back()++;
     return;

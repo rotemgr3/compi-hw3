@@ -2,6 +2,7 @@
 #include "symbol_table.h"
 #include "hw3_output.hpp"
 #include <string.h>
+#include <set>
 
 
 extern SymbolTableStack symbol_table_stack;
@@ -17,6 +18,14 @@ Funcdecl::Funcdecl(Override* override, Rettype* return_type, Node* id, Formals* 
     ret_type = make_shared<Rettype>(*return_type);
     this->id = id->text;
     formals = params->formals_list->list;
+
+    for (auto formal : formals) {
+        if (formal->id == id->text) {
+            output::errorDef(yylineno, formal->id);
+            exit(0);
+        }
+    }
+
     symbol_table_stack.push_function_symbol(make_shared<Funcdecl>(*this));
 }
 
@@ -25,9 +34,16 @@ Funcdecl::Funcdecl(shared_ptr<Override> override, shared_ptr<Rettype> return_typ
     ret_type = return_type;
     this->id = id->text;
     formals = params->formals_list->list;
+
+     for (auto formal : formals) {
+        if (formal->id == id->text) {
+            output::errorDef(yylineno, formal->id);
+            exit(0);
+        }
+    }
+
     symbol_table_stack.push_function_symbol(make_shared<Funcdecl>(*this), true);
 }
-
 
 Formalslist::Formalslist(Formaldecl* formaldecl) : list() {
     list.push_back(make_shared<Formaldecl>(*formaldecl));
@@ -41,6 +57,15 @@ Formalslist::Formalslist(Formaldecl* formaldecl, Formalslist* formalslist) : lis
     list.push_back(make_shared<Formaldecl>(*formaldecl));
     if (formalslist != nullptr)
         list.insert(list.end(), formalslist->list.begin(), formalslist->list.end());
+
+    set<string> names;
+    for (auto formal : list) {
+        if (names.find(formal->id) != names.end()) {
+            output::errorDef(yylineno, formal->id);
+            exit(0);
+        }
+        names.insert(formal->id);
+    }
 }
 
 Exp::Exp(Exp* exp) : type(exp->type), value(exp->value), is_var(exp->is_var) {}
