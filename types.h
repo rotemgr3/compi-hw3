@@ -132,6 +132,7 @@ class Exp : public Node {
         string type;
         string value;
         bool is_var = false;
+        bool is_num = false;
 
         Exp(Exp* exp);
         Exp(Exp* exp1, Node* op, Exp* exp2);

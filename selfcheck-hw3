@@ -1,8 +1,8 @@
 #!/bin/bash 
 # change these per each homework 
 #	link to tests:
-testsurl="https://webcourse.cs.technion.ac.il/fc159753hw_236360_202202/hw/WCFiles/X2363602022011-hw3-tests.zip"
-makefileurl="https://webcourse.cs.technion.ac.il/fc159753hw_236360_202202/hw/WCFiles/X2363602022011-Makefile"
+testsurl="https://webcourse.cs.technion.ac.il/fc159753hw_236360_202202/hw/WCFiles/X2363602022022-hw3-tests.zip"
+makefileurl="https://webcourse.cs.technion.ac.il/fc159753hw_236360_202202/hw/WCFiles/X2363602022021-Makefile"
 #	number of tests: 
 numtests=2 
 #	command to execute test: 

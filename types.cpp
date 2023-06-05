@@ -131,12 +131,14 @@ Exp::Exp(Node* str) : value(str->text) {
     }
     if (isdigit(str->text[0])) {
         type = "int";
+        is_num = true;
         return;
     }
     symbol_table_stack.verify_symbol(str->text);
     type = symbol_table_stack.get_symbol(str->text)->type;
     is_var = true;
 }
+
 Exp::Exp(Call* call) {
     symbol_table_stack.verify_symbol(call->id);
     type = call->ret_type;
@@ -144,12 +146,14 @@ Exp::Exp(Call* call) {
 
 Exp::Exp(Node* str1, Node* byte){
     type = "byte";
+    is_num = true;
     int value = stoi(str1->text);
     if (value > 255) {
         output::errorByteTooLarge(yylineno, str1->text);
         exit(0);
     }
 }
+
 // str = not
 Exp::Exp(Node* str1, Exp* exp){
     if (exp->type != "bool") {
@@ -168,17 +172,23 @@ Exp::Exp(Type* type, Exp* exp){
             output::errorMismatch(yylineno);
             exit(0);
         }
+        if (type->type == "byte" && exp->type == "int") {
+            if (exp->is_num && stoi(exp->value) > 255) {
+                output::errorByteTooLarge(yylineno, exp->value);
+                exit(0);
+            }
+        }
         this->type = type->type;
         this->value = exp->value;
+        return;
     }
     else if (type->type == exp->type){
         this->type = type->type;
         this->value = exp->value;
+        return;
     }
-    else {
-        output::errorMismatch(yylineno);
-        exit(0);
-    }
+    output::errorMismatch(yylineno);
+    exit(0);
 }
 
 Statement::Statement(Type* type, Node* id) {
