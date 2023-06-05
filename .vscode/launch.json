@@ -10,7 +10,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${fileDirname}/hw3",
-            "args": ["<", "./tests/tj14.in"],
+            "args": ["<", "./tests/tj15.in"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}"
         }
