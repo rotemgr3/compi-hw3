@@ -1,0 +1,4 @@
+---end scope---
+a INT -1
+booga INT 0
+line 4: function foo attempt to override a function without declaring the current function as override

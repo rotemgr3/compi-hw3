@@ -1,0 +1,5 @@
+---end scope---
+x INT -1
+y INT -2
+a INT 0
+line 3: identifier foo is already defined

@@ -68,6 +68,13 @@ Formalslist::Formalslist(Formaldecl* formaldecl, Formalslist* formalslist) : lis
     }
 }
 
+Formaldecl::Formaldecl(Type* type, Node* id) : type(type), id(id->text) {
+    if (symbol_table_stack.get_symbol(id->text) != nullptr) {
+        output::errorDef(yylineno, id->text);
+        exit(0);
+    }
+}
+
 Exp::Exp(Exp* exp) : type(exp->type), value(exp->value), is_var(exp->is_var) {}
 
 Exp::Exp(Exp* exp1, Node* op, Exp* exp2){
@@ -216,7 +223,11 @@ Statement::Statement(Node* str, Exp* exp) {
     else {
         symbol_table_stack.verify_symbol(str->text);
         auto symbol = symbol_table_stack.get_symbol(str->text);
-        if (symbol->type != exp->type || symbol->type == "function") {
+        if (symbol->type == "function") {
+            output::errorUndef(yylineno, str->text);
+            exit(0);
+        }
+        if (symbol->type != exp->type) {
             if (!(symbol->type == "int" && exp->type == "byte")) {
                 output::errorMismatch(yylineno);
                 exit(0);

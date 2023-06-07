@@ -83,7 +83,7 @@ class Formaldecl : public Node {
         shared_ptr<Type> type;
         string id;
 
-        Formaldecl(Type* type, Node* id) : type(type), id(id->text) {};
+        Formaldecl(Type* type, Node* id);
         Formaldecl(shared_ptr<Type> type, shared_ptr<Node> id) : type(type), id(id->text) {};
         virtual ~Formaldecl() = default;
 };

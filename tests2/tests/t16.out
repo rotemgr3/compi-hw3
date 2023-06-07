@@ -1,0 +1,9 @@
+---end scope---
+x INT -1
+y INT -2
+booga INT 0
+---end scope---
+x BYTE -1
+y INT -2
+booga INT 0
+line 5: ambiguous call to overloaded function foo

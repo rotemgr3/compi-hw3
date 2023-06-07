@@ -1,0 +1,15 @@
+---end scope---
+y INT -1
+booga INT 0
+---end scope---
+y INT -1
+x BOOL -2
+booga INT 0
+---end scope---
+booga INT 0
+---end scope---
+print (STRING)->VOID 0
+printi (INT)->VOID 0
+foo (INT)->INT 0
+foo (INT,BOOL)->INT 0
+main ()->VOID 0
